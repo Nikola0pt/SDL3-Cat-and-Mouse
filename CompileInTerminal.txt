@@ -1,1 +1,0 @@
-gcc test.c -I./include -L./lib -o test.exe -lmingw32 -lSDL3main -lSDL3
