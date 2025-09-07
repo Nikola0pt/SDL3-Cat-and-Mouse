@@ -2,6 +2,8 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <SDL3/SDL_main.h>
+#include <math.h>
+
 void EventHandling(SDL_Event *event,int *run,const bool *KeyPress){
     switch(event->type){
             case SDL_EVENT_MOUSE_MOTION:
@@ -43,7 +45,7 @@ void RestrictPosition(float *x, float *y){
     }
     
 }
-void DrawGraphics(SDL_Renderer *renderer,SDL_FRect *rect){
+void DrawGraphics(SDL_Renderer *renderer,SDL_FRect *rect,SDL_FRect *enemy){
     if(!SDL_SetRenderDrawColor(renderer,255,255,0,255)){
         fprintf(stderr,"Error:%s",SDL_GetError());
     }
@@ -52,6 +54,10 @@ void DrawGraphics(SDL_Renderer *renderer,SDL_FRect *rect){
         fprintf(stderr,"Error:%s",SDL_GetError());
     }
     SDL_RenderFillRect(renderer,rect);
+    if(!SDL_SetRenderDrawColor(renderer,0,0,255,255)){
+        fprintf(stderr,"Error:%s",SDL_GetError());
+    }
+    SDL_RenderFillRect(renderer,enemy);
     SDL_RenderPresent(renderer);
 }
 void MovePlayer(float *x,float *y){
@@ -91,6 +97,12 @@ int main(int argc,char* argv[]){
     mainrect.y=0;
     mainrect.w=50;
     mainrect.h=50;
+    SDL_FRect enemyrect;
+    enemyrect.x=589;
+    enemyrect.y=429;
+    enemyrect.w=50;
+    enemyrect.h=50;
+    
     //make the main loop
     int running=1;
     SDL_Event event;
@@ -104,7 +116,7 @@ int main(int argc,char* argv[]){
     }
     MovePlayer(&mainrect.x,&mainrect.y);
     RestrictPosition(&mainrect.x,&mainrect.y);
-    DrawGraphics(renderer,&mainrect);
+    DrawGraphics(renderer,&mainrect,&enemyrect);
     SDL_Delay(16);
 }
 SDL_DestroyWindow(window);
