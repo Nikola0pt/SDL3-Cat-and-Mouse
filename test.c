@@ -54,6 +54,17 @@ void DrawGraphics(SDL_Renderer *renderer,SDL_FRect *rect){
     SDL_RenderFillRect(renderer,rect);
     SDL_RenderPresent(renderer);
 }
+void MovePlayer(float *x,float *y){
+    const bool *KeyState=SDL_GetKeyboardState(NULL);
+    if (KeyState[SDL_SCANCODE_W])
+    --*y;
+    if (KeyState[SDL_SCANCODE_S])
+    ++*y;
+    if (KeyState[SDL_SCANCODE_A])
+    --*x;
+    if (KeyState[SDL_SCANCODE_D])
+    ++*x;
+}
 int main(int argc,char* argv[]){
     //initialize the video subsystem, and print out error if there is one
     if(SDL_Init(SDL_INIT_VIDEO)<0){
@@ -91,15 +102,7 @@ int main(int argc,char* argv[]){
         EventHandling(&event,&running,SDL_GetKeyboardState(NULL));
         
     }
-    const bool *KeyState=SDL_GetKeyboardState(NULL);
-    if (KeyState[SDL_SCANCODE_W])
-    mainrect.y--;
-    if (KeyState[SDL_SCANCODE_S])
-    mainrect.y++;
-    if (KeyState[SDL_SCANCODE_A])
-    mainrect.x--;
-    if (KeyState[SDL_SCANCODE_D])
-    mainrect.x++;
+    MovePlayer(&mainrect.x,&mainrect.y);
     RestrictPosition(&mainrect.x,&mainrect.y);
     DrawGraphics(renderer,&mainrect);
     SDL_Delay(16);
