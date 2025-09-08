@@ -3,6 +3,13 @@
 #include <stdlib.h>
 #include <SDL3/SDL_main.h>
 #include <math.h>
+#define SPEED 3
+#define ESPEED 1.5
+typedef struct vector {
+    float speedx;
+    float speedy;
+} EnemySpeed;
+
 
 void EventHandling(SDL_Event *event,int *run,const bool *KeyPress){
     switch(event->type){
@@ -63,13 +70,36 @@ void DrawGraphics(SDL_Renderer *renderer,SDL_FRect *rect,SDL_FRect *enemy){
 void MovePlayer(float *x,float *y){
     const bool *KeyState=SDL_GetKeyboardState(NULL);
     if (KeyState[SDL_SCANCODE_W])
-    --*y;
+    *y-=SPEED;
     if (KeyState[SDL_SCANCODE_S])
-    ++*y;
+    *y+=SPEED;
     if (KeyState[SDL_SCANCODE_A])
-    --*x;
+    *x-=SPEED;
     if (KeyState[SDL_SCANCODE_D])
-    ++*x;
+    *x+=SPEED;
+}
+EnemySpeed CalcSpeed(float x,float y){
+    float z=sqrt(x*x+y*y);
+    EnemySpeed final;
+    final.speedx=(x/z)*ESPEED;
+    final.speedy=(y/z)*ESPEED;
+    return final;
+}
+void EnemyMove(float tx,float ty,float *x,float *y){
+float distx=fabs(tx-*x);
+float disty=fabs(ty-*y);
+EnemySpeed speed=CalcSpeed(distx,disty);
+if(tx>*x){
+    *x+=speed.speedx;
+}
+else {
+    *x-=speed.speedx;
+}
+if(ty>*y){
+   *y+=speed.speedy; 
+}
+else 
+*y-=speed.speedy;
 }
 int main(int argc,char* argv[]){
     //initialize the video subsystem, and print out error if there is one
@@ -116,6 +146,7 @@ int main(int argc,char* argv[]){
     }
     MovePlayer(&mainrect.x,&mainrect.y);
     RestrictPosition(&mainrect.x,&mainrect.y);
+    EnemyMove(mainrect.x,mainrect.y,&enemyrect.x,&enemyrect.y);
     DrawGraphics(renderer,&mainrect,&enemyrect);
     SDL_Delay(16);
 }
