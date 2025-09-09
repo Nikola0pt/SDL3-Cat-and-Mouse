@@ -11,29 +11,29 @@ typedef struct vector {
 } EnemySpeed;
 
 
-void EventHandling(SDL_Event *event,int *run,const bool *KeyPress){
+void EventHandling(SDL_Event *event,int *run){
     switch(event->type){
             case SDL_EVENT_MOUSE_MOTION:
-            SDL_Log("Motion event");
+            //SDL_Log("Motion event");
             break;
             case SDL_EVENT_QUIT:
-            SDL_Log("Attempted quiting____________________");
+           // SDL_Log("Attempted quiting____________________");
             *run=0;
             break;
             case SDL_EVENT_KEY_UP:
-             SDL_Log("Key Up");
+             //SDL_Log("Key Up");
             break;
             case SDL_EVENT_MOUSE_BUTTON_DOWN:
-            SDL_Log("Mouse Key pressed");
+            //SDL_Log("Mouse Key pressed");
             break;
             case SDL_EVENT_KEY_DOWN:
-            SDL_Log("Pressed another button");
+            //SDL_Log("Pressed another button");
             break;
             case SDL_EVENT_TEXT_INPUT:
-            SDL_Log("Input text");
+            //SDL_Log("Input text");
             break;
             default:
-            SDL_Log("Unhandled Event");
+            //SDL_Log("Unhandled Event");
             
     }
 }
@@ -86,21 +86,28 @@ EnemySpeed CalcSpeed(float x,float y){
     return final;
 }
 void EnemyMove(float tx,float ty,float *x,float *y){
-float distx=fabs(tx-*x);
-float disty=fabs(ty-*y);
-EnemySpeed speed=CalcSpeed(distx,disty);
-if(tx>*x){
+    EnemySpeed speed=CalcSpeed(tx-*x,ty-*y);
     *x+=speed.speedx;
+    *y+=speed.speedy; 
+
 }
-else {
-    *x-=speed.speedx;
+float CalcDistanceNeeded(float dx,float dy){
+dx=fabs(dx);
+dy=fabs(dy);
+//Calculate angle of direction
+float y=25/(dy/dx);
+float distance=sqrt(625+y*y);
+return distance;
 }
-if(ty>*y){
-   *y+=speed.speedy; 
+void CollisionCheck(SDL_FRect *player, SDL_FRect *enemy) {
+    if (player->x < enemy->x + enemy->w &&
+        player->x + player->w > enemy->x &&
+        player->y < enemy->y + enemy->h &&
+        player->y + player->h > enemy->y) {
+        SDL_Log("Collision detected");
+    }
 }
-else 
-*y-=speed.speedy;
-}
+
 int main(int argc,char* argv[]){
     //initialize the video subsystem, and print out error if there is one
     if(SDL_Init(SDL_INIT_VIDEO)<0){
@@ -141,12 +148,13 @@ int main(int argc,char* argv[]){
 
         while(SDL_PollEvent(&event)){
         //check for diffirent events
-        EventHandling(&event,&running,SDL_GetKeyboardState(NULL));
+        EventHandling(&event,&running);
         
     }
     MovePlayer(&mainrect.x,&mainrect.y);
     RestrictPosition(&mainrect.x,&mainrect.y);
     EnemyMove(mainrect.x,mainrect.y,&enemyrect.x,&enemyrect.y);
+    CollisionCheck(&mainrect,&enemyrect);
     DrawGraphics(renderer,&mainrect,&enemyrect);
     SDL_Delay(16);
 }
