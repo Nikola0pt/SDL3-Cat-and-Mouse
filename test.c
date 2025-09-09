@@ -3,6 +3,7 @@
 #include <stdlib.h>
 #include <SDL3/SDL_main.h>
 #include <math.h>
+#include <time.h>
 #define SPEED 3
 #define ESPEED 1.5
 typedef struct vector {
@@ -52,7 +53,7 @@ void RestrictPosition(float *x, float *y){
     }
     
 }
-void DrawGraphics(SDL_Renderer *renderer,SDL_FRect *rect,SDL_FRect *enemy){
+void DrawGraphics(SDL_Renderer *renderer,SDL_FRect *rect,SDL_FRect *enemy,SDL_FRect *goal){
     if(!SDL_SetRenderDrawColor(renderer,255,255,0,255)){
         fprintf(stderr,"Error:%s",SDL_GetError());
     }
@@ -65,6 +66,10 @@ void DrawGraphics(SDL_Renderer *renderer,SDL_FRect *rect,SDL_FRect *enemy){
         fprintf(stderr,"Error:%s",SDL_GetError());
     }
     SDL_RenderFillRect(renderer,enemy);
+    if(!SDL_SetRenderDrawColor(renderer,0,255,0,255)){
+        fprintf(stderr,"Error:%s",SDL_GetError());
+    }
+    SDL_RenderFillRect(renderer,goal);
     SDL_RenderPresent(renderer);
 }
 void MovePlayer(float *x,float *y){
@@ -107,6 +112,24 @@ void CollisionCheck(SDL_FRect *player, SDL_FRect *enemy) {
         SDL_Log("Collision detected");
     }
 }
+float Random(char axis){
+    if (axis=='x'){
+        float n=(rand()%540)+50;
+        return n;
+    }
+    if (axis=='y'){
+        float n=(rand()%380)+50;
+        return n;
+    }
+
+}
+void CreateGoal (SDL_FRect *goal,int *madegoal){
+    if(*madegoal) return;
+    goal->x=Random('x');
+    goal->y=Random('y');
+    *madegoal=1;
+
+}
 
 int main(int argc,char* argv[]){
     //initialize the video subsystem, and print out error if there is one
@@ -129,21 +152,25 @@ int main(int argc,char* argv[]){
         SDL_Quit();
         return 1;
     }
-    SDL_FRect mainrect;
+    SDL_FRect mainrect;//player rectangle
     mainrect.x=0;
     mainrect.y=0;
     mainrect.w=50;
     mainrect.h=50;
-    SDL_FRect enemyrect;
+    SDL_FRect enemyrect;//enemy rectangle
     enemyrect.x=589;
     enemyrect.y=429;
     enemyrect.w=50;
     enemyrect.h=50;
+    SDL_FRect goal;//Goal
+    goal.w=50;
+    goal.h=50;
+    srand(time(NULL));//Random Seed
     
     //make the main loop
     int running=1;
     SDL_Event event;
-   
+    int madegoal=0;
     while(running){
 
         while(SDL_PollEvent(&event)){
@@ -151,11 +178,12 @@ int main(int argc,char* argv[]){
         EventHandling(&event,&running);
         
     }
+    CreateGoal(&goal,&madegoal);
     MovePlayer(&mainrect.x,&mainrect.y);
     RestrictPosition(&mainrect.x,&mainrect.y);
     EnemyMove(mainrect.x,mainrect.y,&enemyrect.x,&enemyrect.y);
     CollisionCheck(&mainrect,&enemyrect);
-    DrawGraphics(renderer,&mainrect,&enemyrect);
+    DrawGraphics(renderer,&mainrect,&enemyrect,&goal);
     SDL_Delay(16);
 }
 SDL_DestroyWindow(window);
