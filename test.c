@@ -54,18 +54,22 @@ void RestrictPosition(float *x, float *y){
     
 }
 void DrawGraphics(SDL_Renderer *renderer,SDL_FRect *rect,SDL_FRect *enemy,SDL_FRect *goal){
+    //Sets Background
     if(!SDL_SetRenderDrawColor(renderer,255,255,0,255)){
         fprintf(stderr,"Error:%s",SDL_GetError());
     }
     SDL_RenderClear(renderer);
+    //Draws Player
     if(!SDL_SetRenderDrawColor(renderer,255,0,0,255)){
         fprintf(stderr,"Error:%s",SDL_GetError());
     }
     SDL_RenderFillRect(renderer,rect);
+    //Draws Enemy
     if(!SDL_SetRenderDrawColor(renderer,0,0,255,255)){
         fprintf(stderr,"Error:%s",SDL_GetError());
     }
     SDL_RenderFillRect(renderer,enemy);
+    //Draws Goal
     if(!SDL_SetRenderDrawColor(renderer,0,255,0,255)){
         fprintf(stderr,"Error:%s",SDL_GetError());
     }
@@ -104,13 +108,15 @@ float y=25/(dy/dx);
 float distance=sqrt(625+y*y);
 return distance;
 }
-void CollisionCheck(SDL_FRect *player, SDL_FRect *enemy) {
+int CollisionCheck(SDL_FRect *player, SDL_FRect *enemy) {
     if (player->x < enemy->x + enemy->w &&
         player->x + player->w > enemy->x &&
         player->y < enemy->y + enemy->h &&
         player->y + player->h > enemy->y) {
         SDL_Log("Collision detected");
+        return 1;
     }
+    return 0;
 }
 float Random(char axis){
     if (axis=='x'){
@@ -123,10 +129,14 @@ float Random(char axis){
     }
 
 }
-void CreateGoal (SDL_FRect *goal,int *madegoal){
+void CreateGoal (SDL_FRect *goal,int *madegoal,SDL_FRect *player){
+    if(CollisionCheck(player,goal)){
+        *madegoal=0;
+    }
     if(*madegoal) return;
+    while(CollisionCheck(player,goal)){
     goal->x=Random('x');
-    goal->y=Random('y');
+    goal->y=Random('y');}
     *madegoal=1;
 
 }
@@ -178,7 +188,7 @@ int main(int argc,char* argv[]){
         EventHandling(&event,&running);
         
     }
-    CreateGoal(&goal,&madegoal);
+    CreateGoal(&goal,&madegoal,&mainrect);
     MovePlayer(&mainrect.x,&mainrect.y);
     RestrictPosition(&mainrect.x,&mainrect.y);
     EnemyMove(mainrect.x,mainrect.y,&enemyrect.x,&enemyrect.y);
