@@ -4,13 +4,16 @@
 #include <SDL3/SDL_main.h>
 #include <math.h>
 #include <time.h>
+#include <windows.h>
 #define SPEED 3
 #define ESPEED 1.5
 typedef struct vector {
     float speedx;
     float speedy;
 } EnemySpeed;
-
+int screenw=589;
+int screenh=429;
+int score=-1;
 
 void EventHandling(SDL_Event *event,int *run){
     switch(event->type){
@@ -42,14 +45,14 @@ void RestrictPosition(float *x, float *y){
     if (*x<0){
         *x=0;
     }
-    else if (*x>=640){
-        *x=639;
+    else if (*x>=screenw-50){
+        *x=screenw-51;
     }
     if (*y<0){
         *y=0;
     }
-    else if (*y>=480){
-        *y=479;
+    else if (*y>=screenh-50){
+        *y=screenh-51;
     }
     
 }
@@ -100,14 +103,6 @@ void EnemyMove(float tx,float ty,float *x,float *y){
     *y+=speed.speedy; 
 
 }
-float CalcDistanceNeeded(float dx,float dy){
-dx=fabs(dx);
-dy=fabs(dy);
-//Calculate angle of direction
-float y=25/(dy/dx);
-float distance=sqrt(625+y*y);
-return distance;
-}
 int CollisionCheck(SDL_FRect *player, SDL_FRect *enemy) {
     if (player->x < enemy->x + enemy->w &&
         player->x + player->w > enemy->x &&
@@ -120,11 +115,11 @@ int CollisionCheck(SDL_FRect *player, SDL_FRect *enemy) {
 }
 float Random(char axis){
     if (axis=='x'){
-        float n=(rand()%540)+50;
+        float n=(rand()%(screenw-50));
         return n;
     }
     if (axis=='y'){
-        float n=(rand()%380)+50;
+        float n=(rand()%(screenh-50));
         return n;
     }
 
@@ -132,8 +127,10 @@ float Random(char axis){
 void CreateGoal (SDL_FRect *goal,int *madegoal,SDL_FRect *player){
     if(CollisionCheck(player,goal)){
         *madegoal=0;
+        score++;
     }
     if(*madegoal) return;
+    //Check if New position is on top of Player. If so do random positioning again
     while(CollisionCheck(player,goal)){
     goal->x=Random('x');
     goal->y=Random('y');}
@@ -163,26 +160,28 @@ int main(int argc,char* argv[]){
         return 1;
     }
     SDL_FRect mainrect;//player rectangle
+    SDL_FRect enemyrect;//enemy rectangle
+    SDL_FRect goal;//Goal
+
+    srand(time(NULL));//Random Seed
+    
+    //make the main loop
+    SDL_Event event;
+    start:
+    int madegoal=0;
+    int running=1;
     mainrect.x=0;
     mainrect.y=0;
     mainrect.w=50;
     mainrect.h=50;
-    SDL_FRect enemyrect;//enemy rectangle
-    enemyrect.x=589;
-    enemyrect.y=429;
+    enemyrect.x=screenw;
+    enemyrect.y=screenh;
     enemyrect.w=50;
     enemyrect.h=50;
-    SDL_FRect goal;//Goal
     goal.w=50;
     goal.h=50;
-    srand(time(NULL));//Random Seed
-    
-    //make the main loop
-    int running=1;
-    SDL_Event event;
-    int madegoal=0;
     while(running){
-
+        SDL_GetWindowSizeInPixels(window,&screenw,&screenh);
         while(SDL_PollEvent(&event)){
         //check for diffirent events
         EventHandling(&event,&running);
@@ -192,7 +191,18 @@ int main(int argc,char* argv[]){
     MovePlayer(&mainrect.x,&mainrect.y);
     RestrictPosition(&mainrect.x,&mainrect.y);
     EnemyMove(mainrect.x,mainrect.y,&enemyrect.x,&enemyrect.y);
-    CollisionCheck(&mainrect,&enemyrect);
+    if(CollisionCheck(&mainrect,&enemyrect)){
+        char message[60];
+        sprintf(message,"You Lost\n You have %d points. Retry?",score);
+        if(MessageBox(NULL,message,"You Lose",MB_YESNO)==IDNO){
+            running=0;
+        }
+        else {
+            //goes to the start where the declarations of values happen. This theoretically resets the game
+            score=0;
+            goto start;
+        }
+    }
     DrawGraphics(renderer,&mainrect,&enemyrect,&goal);
     SDL_Delay(16);
 }
